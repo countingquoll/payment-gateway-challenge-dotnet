@@ -16,3 +16,9 @@ PaymentGateway.sln
 ```
 
 Feel free to change the structure of the solution, use a different test library etc.
+
+## Implementation notes
+
+### Validation
+IValidatableObject is used for the cross-field check. The comparison is done at month granularity — a card expiring this month is still valid. Math.Clamp guards against constructing an invalid DateTime if ExpiryMonth itself is out of range (since the Range check and IValidatableObject.Validate can both run).
+

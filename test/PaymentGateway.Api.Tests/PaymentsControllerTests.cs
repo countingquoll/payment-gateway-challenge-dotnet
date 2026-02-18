@@ -119,6 +119,56 @@ public class PaymentsControllerTests
     }
 
     [Fact]
+    public async Task PostPaymentReturns400ForExpiredCard()
+    {
+        // Arrange
+        var now = DateTime.UtcNow;
+        var request = new PostPaymentRequest
+        {
+            CardNumberLastFour = _random.Next(1111, 9999),
+            ExpiryMonth = now.Month,
+            ExpiryYear = now.Year - 1,
+            Currency = "GBP",
+            Amount = _random.Next(1, 10000),
+            Cvv = _random.Next(100, 999)
+        };
+
+        var webApplicationFactory = new WebApplicationFactory<PaymentsController>();
+        var client = webApplicationFactory.CreateClient();
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/Payments", request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PostPaymentReturns201ForCardExpiringThisMonth()
+    {
+        // Arrange
+        var now = DateTime.UtcNow;
+        var request = new PostPaymentRequest
+        {
+            CardNumberLastFour = _random.Next(1111, 9999),
+            ExpiryMonth = now.Month,
+            ExpiryYear = now.Year,
+            Currency = "GBP",
+            Amount = _random.Next(1, 10000),
+            Cvv = _random.Next(100, 999)
+        };
+
+        var webApplicationFactory = new WebApplicationFactory<PaymentsController>();
+        var client = webApplicationFactory.CreateClient();
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/Payments", request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+    }
+
+    [Fact]
     public async Task PostPaymentStoresPaymentRetrievableById()
     {
         // Arrange
