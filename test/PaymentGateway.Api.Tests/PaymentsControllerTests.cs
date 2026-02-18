@@ -92,6 +92,32 @@ public class PaymentsControllerTests
         Assert.Equal(request.Amount, paymentResponse.Amount);
     }
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(13)]
+    public async Task PostPaymentReturns400ForInvalidExpiryMonth(int invalidMonth)
+    {
+        // Arrange
+        var request = new PostPaymentRequest
+        {
+            CardNumberLastFour = _random.Next(1111, 9999),
+            ExpiryMonth = invalidMonth,
+            ExpiryYear = _random.Next(2025, 2030),
+            Currency = "GBP",
+            Amount = _random.Next(1, 10000),
+            Cvv = _random.Next(100, 999)
+        };
+
+        var webApplicationFactory = new WebApplicationFactory<PaymentsController>();
+        var client = webApplicationFactory.CreateClient();
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/Payments", request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
     [Fact]
     public async Task PostPaymentStoresPaymentRetrievableById()
     {
