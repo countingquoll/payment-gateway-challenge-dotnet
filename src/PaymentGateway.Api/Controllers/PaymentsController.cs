@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
+using PaymentGateway.Api.Models;
+using PaymentGateway.Api.Models.Requests;
 using PaymentGateway.Api.Models.Responses;
 using PaymentGateway.Api.Services;
 
@@ -17,7 +19,7 @@ public class PaymentsController : Controller
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<PostPaymentResponse?>> GetPaymentAsync(Guid id)
+    public async Task<ActionResult<PostPaymentResponse?>> GetPayment(Guid id)
     {
         var payment = _paymentsRepository.Get(id);
 
@@ -25,5 +27,24 @@ public class PaymentsController : Controller
             return NotFound();
 
         return new OkObjectResult(payment);
+    }
+
+    [HttpPost]
+    public ActionResult<PostPaymentResponse> PostPayment([FromBody] PostPaymentRequest request)
+    {
+        var payment = new PostPaymentResponse
+        {
+            Id = Guid.NewGuid(),
+            Status = PaymentStatus.Authorized,
+            CardNumberLastFour = request.CardNumberLastFour,
+            ExpiryMonth = request.ExpiryMonth,
+            ExpiryYear = request.ExpiryYear,
+            Currency = request.Currency,
+            Amount = request.Amount
+        };
+
+        _paymentsRepository.Add(payment);
+
+        return CreatedAtAction(nameof(GetPayment), new { id = payment.Id }, payment);
     }
 }
