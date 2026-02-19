@@ -29,7 +29,8 @@ public class PostPaymentRequestValidatorTests
         request.ExpiryMonth = month;
 
         _validator.TestValidate(request)
-            .ShouldHaveValidationErrorFor(x => x.ExpiryMonth);
+            .ShouldHaveValidationErrorFor(x => x.ExpiryMonth)
+            .WithErrorMessage("ExpiryMonth must be between 1 and 12.");
     }
 
     [Theory]
@@ -53,7 +54,8 @@ public class PostPaymentRequestValidatorTests
         request.Amount = amount;
 
         _validator.TestValidate(request)
-            .ShouldHaveValidationErrorFor(x => x.Amount);
+            .ShouldHaveValidationErrorFor(x => x.Amount)
+            .WithErrorMessage("Amount must be greater than 0.");
     }
 
     [Fact]
@@ -76,7 +78,8 @@ public class PostPaymentRequestValidatorTests
         request.Currency = currency;
 
         _validator.TestValidate(request)
-            .ShouldHaveValidationErrorFor(x => x.Currency);
+            .ShouldHaveValidationErrorFor(x => x.Currency)
+            .WithErrorMessage("Currency is not supported.");
     }
 
     [Theory]
@@ -101,7 +104,8 @@ public class PostPaymentRequestValidatorTests
         request.ExpiryYear = now.Year - 1;
 
         _validator.TestValidate(request)
-            .ShouldHaveValidationErrorFor(x => x.ExpiryMonth);
+            .ShouldHaveValidationErrorFor(x => x.ExpiryMonth)
+            .WithErrorMessage("Card has expired.");
     }
 
     [Fact]

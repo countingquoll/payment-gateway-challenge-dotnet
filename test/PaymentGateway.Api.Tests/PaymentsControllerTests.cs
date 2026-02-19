@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -270,6 +271,111 @@ public class PaymentsControllerTests
 
         // Assert
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PostPaymentReturns400WithMessageForInvalidExpiryMonth()
+    {
+        // Arrange
+        var request = new PostPaymentRequest
+        {
+            CardNumberLastFour = _random.Next(1111, 9999),
+            ExpiryMonth = 0,
+            ExpiryYear = _random.Next(2025, 2030),
+            Currency = "GBP",
+            Amount = _random.Next(1, 10000),
+            Cvv = _random.Next(100, 999)
+        };
+
+        var webApplicationFactory = new WebApplicationFactory<PaymentsController>();
+        var client = webApplicationFactory.CreateClient();
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/Payments", request);
+        var problem = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Contains("ExpiryMonth must be between 1 and 12.", problem!.Errors["ExpiryMonth"]);
+    }
+
+    [Fact]
+    public async Task PostPaymentReturns400WithMessageForInvalidAmount()
+    {
+        // Arrange
+        var request = new PostPaymentRequest
+        {
+            CardNumberLastFour = _random.Next(1111, 9999),
+            ExpiryMonth = _random.Next(1, 12),
+            ExpiryYear = _random.Next(2025, 2030),
+            Currency = "GBP",
+            Amount = 0,
+            Cvv = _random.Next(100, 999)
+        };
+
+        var webApplicationFactory = new WebApplicationFactory<PaymentsController>();
+        var client = webApplicationFactory.CreateClient();
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/Payments", request);
+        var problem = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Contains("Amount must be greater than 0.", problem!.Errors["Amount"]);
+    }
+
+    [Fact]
+    public async Task PostPaymentReturns400WithMessageForUnsupportedCurrency()
+    {
+        // Arrange
+        var request = new PostPaymentRequest
+        {
+            CardNumberLastFour = _random.Next(1111, 9999),
+            ExpiryMonth = _random.Next(1, 12),
+            ExpiryYear = _random.Next(2025, 2030),
+            Currency = "JPY",
+            Amount = _random.Next(1, 10000),
+            Cvv = _random.Next(100, 999)
+        };
+
+        var webApplicationFactory = new WebApplicationFactory<PaymentsController>();
+        var client = webApplicationFactory.CreateClient();
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/Payments", request);
+        var problem = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Contains("Currency is not supported.", problem!.Errors["Currency"]);
+    }
+
+    [Fact]
+    public async Task PostPaymentReturns400WithMessageForExpiredCard()
+    {
+        // Arrange
+        var now = DateTime.UtcNow;
+        var request = new PostPaymentRequest
+        {
+            CardNumberLastFour = _random.Next(1111, 9999),
+            ExpiryMonth = now.Month,
+            ExpiryYear = now.Year - 1,
+            Currency = "GBP",
+            Amount = _random.Next(1, 10000),
+            Cvv = _random.Next(100, 999)
+        };
+
+        var webApplicationFactory = new WebApplicationFactory<PaymentsController>();
+        var client = webApplicationFactory.CreateClient();
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/Payments", request);
+        var problem = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Contains("Card has expired.", problem!.Errors["ExpiryMonth"]);
     }
 
     [Fact]
