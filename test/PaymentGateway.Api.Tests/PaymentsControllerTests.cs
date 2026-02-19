@@ -68,7 +68,7 @@ public class PaymentsControllerTests
         {
             CardNumberLastFour = _random.Next(1111, 9999),
             ExpiryMonth = _random.Next(1, 12),
-            ExpiryYear = _random.Next(2025, 2030),
+            ExpiryYear = DateTime.UtcNow.Year + _random.Next(1, 5),
             Currency = "GBP",
             Amount = _random.Next(1, 10000),
             Cvv = _random.Next(100, 999)
