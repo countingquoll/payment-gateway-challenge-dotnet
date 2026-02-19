@@ -118,6 +118,56 @@ public class PaymentsControllerTests
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public async Task PostPaymentReturns400ForInvalidAmount(int invalidAmount)
+    {
+        // Arrange
+        var request = new PostPaymentRequest
+        {
+            CardNumberLastFour = _random.Next(1111, 9999),
+            ExpiryMonth = _random.Next(1, 12),
+            ExpiryYear = DateTime.UtcNow.Year + _random.Next(1, 5),
+            Currency = "GBP",
+            Amount = invalidAmount,
+            Cvv = _random.Next(100, 999)
+        };
+
+        var webApplicationFactory = new WebApplicationFactory<PaymentsController>();
+        var client = webApplicationFactory.CreateClient();
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/Payments", request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PostPaymentReturns201ForAmountOfOne()
+    {
+        // Arrange
+        var request = new PostPaymentRequest
+        {
+            CardNumberLastFour = _random.Next(1111, 9999),
+            ExpiryMonth = _random.Next(1, 12),
+            ExpiryYear = DateTime.UtcNow.Year + _random.Next(1, 5),
+            Currency = "GBP",
+            Amount = 1,
+            Cvv = _random.Next(100, 999)
+        };
+
+        var webApplicationFactory = new WebApplicationFactory<PaymentsController>();
+        var client = webApplicationFactory.CreateClient();
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/Payments", request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+    }
+
     [Fact]
     public async Task PostPaymentReturns400ForExpiredCard()
     {

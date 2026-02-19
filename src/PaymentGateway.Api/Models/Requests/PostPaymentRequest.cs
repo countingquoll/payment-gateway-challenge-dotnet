@@ -6,13 +6,14 @@ public class PostPaymentRequest : IValidatableObject
 {
     public int CardNumberLastFour { get; set; }
 
-    [Range(1, 12)]
+    [Range(1, 12, ErrorMessage = "ExpiryMonth must be between 1 and 12.")]
     public int ExpiryMonth { get; set; }
 
     public int ExpiryYear { get; set; }
 
     public string Currency { get; set; }
 
+    [Range(1, int.MaxValue, ErrorMessage = "Amount must be greater than 0.")]
     public int Amount { get; set; }
 
     public int Cvv { get; set; }
