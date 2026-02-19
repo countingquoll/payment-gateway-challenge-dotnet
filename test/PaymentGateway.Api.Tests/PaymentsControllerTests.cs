@@ -119,6 +119,60 @@ public class PaymentsControllerTests
     }
 
     [Theory]
+    [InlineData("JPY")]
+    [InlineData("AUD")]
+    [InlineData("")]
+    public async Task PostPaymentReturns400ForUnsupportedCurrency(string unsupportedCurrency)
+    {
+        // Arrange
+        var request = new PostPaymentRequest
+        {
+            CardNumberLastFour = _random.Next(1111, 9999),
+            ExpiryMonth = _random.Next(1, 12),
+            ExpiryYear = DateTime.UtcNow.Year + _random.Next(1, 5),
+            Currency = unsupportedCurrency,
+            Amount = _random.Next(1, 10000),
+            Cvv = _random.Next(100, 999)
+        };
+
+        var webApplicationFactory = new WebApplicationFactory<PaymentsController>();
+        var client = webApplicationFactory.CreateClient();
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/Payments", request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Theory]
+    [InlineData("USD")]
+    [InlineData("EUR")]
+    [InlineData("GBP")]
+    public async Task PostPaymentReturns201ForSupportedCurrency(string supportedCurrency)
+    {
+        // Arrange
+        var request = new PostPaymentRequest
+        {
+            CardNumberLastFour = _random.Next(1111, 9999),
+            ExpiryMonth = _random.Next(1, 12),
+            ExpiryYear = DateTime.UtcNow.Year + _random.Next(1, 5),
+            Currency = supportedCurrency,
+            Amount = _random.Next(1, 10000),
+            Cvv = _random.Next(100, 999)
+        };
+
+        var webApplicationFactory = new WebApplicationFactory<PaymentsController>();
+        var client = webApplicationFactory.CreateClient();
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/Payments", request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+    }
+
+    [Theory]
     [InlineData(0)]
     [InlineData(-1)]
     public async Task PostPaymentReturns400ForInvalidAmount(int invalidAmount)

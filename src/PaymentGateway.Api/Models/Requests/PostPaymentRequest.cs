@@ -1,5 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
+using PaymentGateway.Api.Services;
+
 namespace PaymentGateway.Api.Models.Requests;
 
 public class PostPaymentRequest : IValidatableObject
@@ -20,6 +22,12 @@ public class PostPaymentRequest : IValidatableObject
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
+        var currencyService = (CurrencyService)validationContext.GetService(typeof(CurrencyService))!;
+        if (!currencyService.GetCurrencyCodes().Contains(Currency))
+            yield return new ValidationResult(
+                "Currency is not supported.",
+                [nameof(Currency)]);
+
         var now = DateTime.UtcNow;
         var expiry = new DateTime(ExpiryYear, Math.Clamp(ExpiryMonth, 1, 12), 1);
 
